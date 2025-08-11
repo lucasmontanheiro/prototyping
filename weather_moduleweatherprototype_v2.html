@@ -7,22 +7,20 @@
 
   <!--
   ============================================================================
-  Title: Modern Weather Dashboard (Open‑Meteo Edition, No API Key)
-  Purpose: Provide a sleek, responsive weather dashboard powered by free,
-           keyless Open‑Meteo APIs with real data for São Paulo, Brazil.
+  Title: Modern Weather Dashboard (Open‑Meteo, No API Key) — GitHub Pages Safe
+  Purpose: A responsive, Material‑ish weather dashboard for São Paulo, Brazil,
+           powered by free Open‑Meteo endpoints (no keys). Built for GH Pages.
   Features:
-    - Current temp & condition, feels like, high/low
+    - Current temperature & condition, feels like, daily high/low
     - Hourly forecast (next 5 hours)
     - Air quality (PM10, PM2.5, Ozone)
-    - Pollen (alder/tree, grass, ragweed/weed proxies)
-    - “Use my location” via Geolocation API
-    - No API key needed; GitHub Pages‑friendly
-  Implementation Notes:
-    - Uses Bootstrap 5 & Bootstrap Icons
-    - DRY, modular JS with documented functions
-    - Geocoding param uses countryCode=BR (critical for Open‑Meteo)
-    - Friendly error banner for live debugging on Pages
-    - `forecast_days=1` to speed first paint
+    - "Use my location" via Geolocation API
+    - Error banner for clear, friendly diagnostics on Pages
+  Notes:
+    - Geocoding filter uses countryCode=BR (required by Open‑Meteo).
+    - Pollen section removed to avoid DNS issues with pollen subdomain.
+    - `forecast_days=1` for fast first paint.
+    - Modular, documented JS for easy extension.
   Original Prompt: Create a bootstrap5 version of a modern weather dashboard
   This Prompt: Make a version with a weather API (no api key) connected and
                information about São Paulo, Brazil, suitable for GitHub Pages.
@@ -76,8 +74,8 @@
       margin: 10px 0;
       border: 1px solid rgba(255,255,255,0.08);
     }
-    .quality-label,.pollen-label { opacity: 0.85; font-size: .9rem; }
-    .quality-value,.pollen-value { font-size: 1.25rem; font-weight: 600; }
+    .quality-label { opacity: 0.85; font-size: .9rem; }
+    .quality-value { font-size: 1.25rem; font-weight: 600; }
     .quality-status.good { color: #8ef58a; }
     .quality-status.moderate { color: #ffd166; }
     .quality-status.poor { color: #ff7b7b; }
@@ -189,42 +187,6 @@
       </div>
     </div>
 
-    <!-- Pollen Levels Section -->
-    <div class="row mb-4">
-      <div class="col-12">
-        <div class="weather-insight">
-          <h5 class="mb-3">
-            <i class="bi bi-flower1 me-2"></i>
-            Pollen Levels (hourly)
-          </h5>
-          <div class="row text-center g-3">
-            <div class="col-4">
-              <div class="pollen-item">
-                <div class="pollen-label">Tree*</div>
-                <div class="pollen-value" id="pollenTree">--</div>
-              </div>
-            </div>
-            <div class="col-4">
-              <div class="pollen-item">
-                <div class="pollen-label">Grass</div>
-                <div class="pollen-value" id="pollenGrass">--</div>
-              </div>
-            </div>
-            <div class="col-4">
-              <div class="pollen-item">
-                <div class="pollen-label">Weed**</div>
-                <div class="pollen-value" id="pollenWeed">--</div>
-              </div>
-            </div>
-          </div>
-          <div class="minitext mt-2">
-            *Using alder as a tree proxy. **Using ragweed as a weed proxy.
-          </div>
-          <div class="minitext" id="pollenTimestamp"></div>
-        </div>
-      </div>
-    </div>
-
     <!-- Hourly Forecast Section -->
     <div class="row mb-4">
       <div class="col-12">
@@ -267,8 +229,7 @@
     const ENDPOINTS = {
       geocode: "https://geocoding-api.open-meteo.com/v1/search",
       weather: "https://api.open-meteo.com/v1/forecast",
-      air:     "https://air-quality-api.open-meteo.com/v1/air-quality",
-      pollen:  "https://pollen-api.open-meteo.com/v1/forecast"
+      air:     "https://air-quality-api.open-meteo.com/v1/air-quality"
     };
 
     /** Map of WMO weather codes to labels and icons (emoji for simplicity) */
@@ -327,12 +288,7 @@
       a.classList.remove("d-none");
     }
 
-    /**
-     * Get nearest index in a sorted ISO time array for now (or a supplied date).
-     * @param {string[]} isoTimes - array of ISO strings
-     * @param {Date} [ref=new Date()]
-     * @returns {number} index
-     */
+    /** Get nearest index in a sorted ISO time array for now (or a supplied date). */
     function indexNearestHour(isoTimes, ref = new Date()) {
       const target = ref.getTime();
       let bestIdx = 0, bestDiff = Infinity;
@@ -344,29 +300,19 @@
       return bestIdx;
     }
 
-    /**
-     * Format an ISO timestamp into local hour label (e.g., "10 AM").
-     * @param {string} iso
-     * @returns {string}
-     */
+    /** Format an ISO timestamp into local hour label (e.g., "10 AM"). */
     function hourLabel(iso) {
       const d = new Date(iso);
       return d.toLocaleTimeString([], { hour: "numeric" });
     }
 
-    /**
-     * Returns air quality status class & label for a given pollutant value.
-     * Basic EU-like cutoffs for demo; tune as needed.
-     * @param {number} value
-     * @param {"pm10"|"pm25"|"ozone"} type
-     * @returns {{className:string,label:string}}
-     */
+    /** Air quality banding (simple EU-like thresholds). */
     function aqBand(value, type) {
       if (value == null || isNaN(value)) return { className: "", label: "—" };
       let good, moderate;
       if (type === "pm10") { good = 20; moderate = 40; }
       else if (type === "pm25") { good = 10; moderate = 20; }
-      else { good = 100; moderate = 160; } // ozone in µg/m³ (rough)
+      else { good = 100; moderate = 160; } // ozone in µg/m³
       if (value <= good) return { className: "good", label: "Good" };
       if (value <= moderate) return { className: "moderate", label: "Moderate" };
       return { className: "poor", label: "Poor" };
@@ -395,31 +341,6 @@
       col.appendChild(sTime);
       return col;
     }
-
-    /**
-     * Build a simple "insight" string for next hours (rain vs. clear),
-     * using WMO codes (>=61 considered rain).
-     */
-    function buildInsight(codes, times, startIdx, horizon = 6) {
-      const end = Math.min(codes.length, startIdx + horizon);
-      let rainySlots = [];
-      for (let i = startIdx; i < end; i++) {
-        const code = codes[i];
-        if ((code >= 61 && code <= 67) || (code >= 80 && code <= 82)) {
-          rainySlots.push(hourLabel(times[i]));
-        }
-      }
-      if (rainySlots.length === 0) {
-        return `No rain expected in the next ${end - startIdx} hours.`;
-      }
-      return `Possible rain around: ${rainySlots.join(", ")}.`;
-    }
-
-    // =========================
-    // DOM Helpers
-    // =========================
-    const el = (id) => document.getElementById(id);
-    function setText(id, text) { el(id).textContent = text; }
 
     // =========================
     // Data Fetchers
@@ -471,16 +392,6 @@
       return fetchJSON(url.toString());
     }
 
-    /** Fetch pollen forecast for coordinates (hourly). */
-    async function getPollen(lat, lon, timezone = "auto") {
-      const url = new URL(ENDPOINTS.pollen);
-      url.searchParams.set("latitude", lat);
-      url.searchParams.set("longitude", lon);
-      url.searchParams.set("hourly", "alder_pollen,grass_pollen,ragweed_pollen");
-      url.searchParams.set("timezone", timezone || "auto");
-      return fetchJSON(url.toString());
-    }
-
     // =========================
     // Renderers
     // =========================
@@ -502,7 +413,7 @@
 
     /** Render hourly forecast next 5 hours. */
     function renderHourly(wx) {
-      const row = el("hourlyRow");
+      const row = document.getElementById("hourlyRow");
       row.innerHTML = "";
       const times = wx.hourly?.time ?? [];
       const temps = wx.hourly?.temperature_2m ?? [];
@@ -516,8 +427,20 @@
       for (let i = 0; i < count && (start + i) < times.length; i++) {
         row.appendChild(makeHourCard(times[start + i], temps[start + i], codes[start + i]));
       }
-      // Insight
-      setText("insightText", buildInsight(codes, times, start, 6));
+      // Insight text based on upcoming weather codes
+      const insight = (function buildInsight(codes, times, startIdx, horizon = 6) {
+        const end = Math.min(codes.length, startIdx + horizon);
+        let rainySlots = [];
+        for (let i = startIdx; i < end; i++) {
+          const code = codes[i];
+          if ((code >= 61 && code <= 67) || (code >= 80 && code <= 82)) {
+            rainySlots.push(hourLabel(times[i]));
+          }
+        }
+        if (rainySlots.length === 0) return `No rain expected in the next ${end - startIdx} hours.`;
+        return `Possible rain around: ${rainySlots.join(", ")}.`;
+      })(codes, times, start, 6);
+      setText("insightText", insight);
     }
 
     /** Render Air Quality from latest available hour. */
@@ -542,26 +465,11 @@
       const b25 = aqBand(pm25v, "pm25");
       const bo3 = aqBand(ozonev, "ozone");
 
-      const pm10S = el("pm10Status"); pm10S.className = `quality-status ${b10.className}`; pm10S.textContent = b10.label;
-      const pm25S = el("pm25Status"); pm25S.className = `quality-status ${b25.className}`; pm25S.textContent = b25.label;
-      const o3S   = el("ozoneStatus"); o3S.className   = `quality-status ${bo3.className}`;  o3S.textContent = bo3.label;
+      const pm10S = document.getElementById("pm10Status"); pm10S.className = `quality-status ${b10.className}`; pm10S.textContent = b10.label;
+      const pm25S = document.getElementById("pm25Status"); pm25S.className = `quality-status ${b25.className}`; pm25S.textContent = b25.label;
+      const o3S   = document.getElementById("ozoneStatus"); o3S.className   = `quality-status ${bo3.className}`;  o3S.textContent = bo3.label;
 
       setText("aqTimestamp", `Source: Open‑Meteo • ${new Date(times[idx]).toLocaleString()}`);
-    }
-
-    /** Render Pollen from latest available hour (alder=tree, ragweed=weed). */
-    function renderPollen(pl) {
-      const times = pl.hourly?.time ?? [];
-      if (!times.length) {
-        setText("pollenTree","--"); setText("pollenGrass","--"); setText("pollenWeed","--");
-        setText("pollenTimestamp","No pollen data.");
-        return;
-      }
-      const idx = indexNearestHour(times);
-      setText("pollenTree", fmtNum(pl.hourly.alder_pollen?.[idx], 0));
-      setText("pollenGrass", fmtNum(pl.hourly.grass_pollen?.[idx], 0));
-      setText("pollenWeed", fmtNum(pl.hourly.ragweed_pollen?.[idx], 0));
-      setText("pollenTimestamp", `Source: Open‑Meteo • ${new Date(times[idx]).toLocaleString()}`);
     }
 
     // =========================
@@ -569,7 +477,7 @@
     // =========================
 
     /**
-     * Core loader: resolves location, fetches all datasets, and renders UI.
+     * Core loader: resolves location, fetches weather & air quality, renders UI.
      * @param {{name?:string, country?:string, lat?:number, lon?:number}} params
      */
     async function loadAll(params = {}) {
@@ -588,18 +496,16 @@
         setText("cityName", name);
         setText("countryName", country);
 
-        // 2) Fetch in parallel
-        const [wx, aq, pl] = await Promise.all([
+        // 2) Fetch in parallel (weather + air only)
+        const [wx, aq] = await Promise.all([
           getWeather(lat, lon, tz),
           getAirQuality(lat, lon, tz),
-          getPollen(lat, lon, tz),
         ]);
 
         // 3) Render sections
         renderMain(wx);
         renderHourly(wx);
         renderAir(aq);
-        renderPollen(pl);
       } catch (err) {
         console.error(err);
         showError(err?.message || "Failed to load data. Check the console.");
@@ -643,6 +549,9 @@
 
     // Initial load for São Paulo, BR
     loadAll();
+
+    // Helper used by renderers
+    function setText(id, text) { document.getElementById(id).textContent = text; }
   </script>
 </body>
 </html>
