@@ -8,40 +8,24 @@
   <!--
   ============================================================================
   Title: Modern Weather Dashboard (Open‑Meteo Edition, No API Key)
-  Purpose: Provide a sleek, responsive weather dashboard powered by a free,
-           keyless API (Open‑Meteo) with real data for São Paulo, Brazil.
-  Description:
-    - Responsive Bootstrap 5 UI inspired by Material Design.
-    - Live data for:
-        • Current temperature & conditions
-        • Feels like (apparent temperature)
-        • Daily high / low
-        • Hourly forecast (next 5 hours)
-        • Air Quality (PM10, PM2.5, Ozone)
-        • Pollen levels (Tree/Grass/Weed approximations)
-    - Defaults to São Paulo, Brazil using Open‑Meteo Geocoding.
-    - Optional “Use my location” via browser Geolocation API.
-    - No API key needed.
-
+  Purpose: Provide a sleek, responsive weather dashboard powered by free,
+           keyless Open‑Meteo APIs with real data for São Paulo, Brazil.
   Features:
-    - Modular, DRY JavaScript with clear, developer‑friendly comments.
-    - Graceful fallbacks if any endpoint returns missing data.
-    - Mobile‑first, fully responsive layout with Bootstrap 5.
-    - Simple WMO → Condition text/icon mapping.
-
-  Data Providers (no key required):
-    - Geocoding:   https://geocoding-api.open-meteo.com
-    - Weather:     https://api.open-meteo.com
-    - Air Quality: https://air-quality-api.open-meteo.com
-    - Pollen:      https://pollen-api.open-meteo.com
-
+    - Current temp & condition, feels like, high/low
+    - Hourly forecast (next 5 hours)
+    - Air quality (PM10, PM2.5, Ozone)
+    - Pollen (alder/tree, grass, ragweed/weed proxies)
+    - “Use my location” via Geolocation API
+    - No API key needed; GitHub Pages‑friendly
+  Implementation Notes:
+    - Uses Bootstrap 5 & Bootstrap Icons
+    - DRY, modular JS with documented functions
+    - Geocoding param uses countryCode=BR (critical for Open‑Meteo)
+    - Friendly error banner for live debugging on Pages
+    - `forecast_days=1` to speed first paint
   Original Prompt: Create a bootstrap5 version of a modern weather dashboard
-  This Prompt: "Make a version of this template with a weather API (no api key)
-               connected and information about São Paulo, Brazil."
-
-  Notes:
-    - You can adapt the default city by changing DEFAULT_CITY below.
-    - All functions are documented for future enhancements.
+  This Prompt: Make a version with a weather API (no api key) connected and
+               information about São Paulo, Brazil, suitable for GitHub Pages.
   ============================================================================
   -->
 
@@ -128,6 +112,10 @@
 </head>
 <body>
   <div class="container py-4">
+
+    <!-- Error banner for GitHub Pages (shows API / network issues) -->
+    <div id="errBanner" class="alert alert-danger d-none" role="alert"></div>
+
     <!-- Header Section -->
     <div class="row mb-4 align-items-center">
       <div class="col-12 d-flex align-items-center gap-2">
@@ -283,7 +271,7 @@
       pollen:  "https://pollen-api.open-meteo.com/v1/forecast"
     };
 
-    /** Map of WMO weather codes to labels and icons (Bootstrap Icons / emoji) */
+    /** Map of WMO weather codes to labels and icons (emoji for simplicity) */
     const WMO = {
       0:  {label: "Clear sky", icon: "☀️"},
       1:  {label: "Mostly clear", icon: "🌤️"},
@@ -332,6 +320,13 @@
       return res.json();
     }
 
+    /** Display an error in the top banner (for GitHub Pages visibility) */
+    function showError(msg) {
+      const a = document.getElementById("errBanner");
+      a.textContent = msg || "An unexpected error occurred.";
+      a.classList.remove("d-none");
+    }
+
     /**
      * Get nearest index in a sorted ISO time array for now (or a supplied date).
      * @param {string[]} isoTimes - array of ISO strings
@@ -371,31 +366,18 @@
       let good, moderate;
       if (type === "pm10") { good = 20; moderate = 40; }
       else if (type === "pm25") { good = 10; moderate = 20; }
-      else { // ozone as µg/m³ rough bands
-        good = 100; moderate = 160;
-      }
+      else { good = 100; moderate = 160; } // ozone in µg/m³ (rough)
       if (value <= good) return { className: "good", label: "Good" };
       if (value <= moderate) return { className: "moderate", label: "Moderate" };
       return { className: "poor", label: "Poor" };
     }
 
-    /**
-     * Safe number display with fallback.
-     * @param {number|undefined|null} n
-     * @param {number} digits
-     * @returns {string}
-     */
+    /** Safe number display with fallback. */
     function fmtNum(n, digits = 0) {
       return (n == null || isNaN(n)) ? "--" : Number(n).toFixed(digits);
     }
 
-    /**
-     * Create a small hourly card element.
-     * @param {string} timeISO
-     * @param {number} tempC
-     * @param {number} wmo
-     * @returns {HTMLElement}
-     */
+    /** Create a small hourly card element. */
     function makeHourCard(timeISO, tempC, wmo) {
       const col = document.createElement("div");
       col.className = "col hour-col";
@@ -417,18 +399,13 @@
     /**
      * Build a simple "insight" string for next hours (rain vs. clear),
      * using WMO codes (>=61 considered rain).
-     * @param {number[]} codes
-     * @param {string[]} times
-     * @param {number} startIdx
-     * @param {number} horizon
-     * @returns {string}
      */
     function buildInsight(codes, times, startIdx, horizon = 6) {
       const end = Math.min(codes.length, startIdx + horizon);
       let rainySlots = [];
       for (let i = startIdx; i < end; i++) {
         const code = codes[i];
-        if (code >= 61 && code <= 67 || (code >= 80 && code <= 82)) {
+        if ((code >= 61 && code <= 67) || (code >= 80 && code <= 82)) {
           rainySlots.push(hourLabel(times[i]));
         }
       }
@@ -442,9 +419,7 @@
     // DOM Helpers
     // =========================
     const el = (id) => document.getElementById(id);
-
     function setText(id, text) { el(id).textContent = text; }
-    function setHTML(id, html) { el(id).innerHTML = html; }
 
     // =========================
     // Data Fetchers
@@ -452,9 +427,7 @@
 
     /**
      * Geocode a place name to lat/lon via Open‑Meteo Geocoding.
-     * @param {string} name
-     * @param {string} countryCode optional country filter like "BR"
-     * @returns {Promise<{name:string,country:string,latitude:number,longitude:number,timezone:string}>}
+     * Uses countryCode (camelCase) — required for correct filtering.
      */
     async function geocode(name, countryCode) {
       const url = new URL(ENDPOINTS.geocode);
@@ -462,10 +435,10 @@
       url.searchParams.set("count", "1");
       url.searchParams.set("language", "en");
       url.searchParams.set("format", "json");
-      if (countryCode) url.searchParams.set("country", countryCode);
+      if (countryCode) url.searchParams.set("countryCode", countryCode);
       const data = await fetchJSON(url.toString());
-      const r = data?.results?.[0];
-      if (!r) throw new Error("No geocoding result.");
+      const r = data && Array.isArray(data.results) ? data.results[0] : null;
+      if (!r) throw new Error("No geocoding result for the requested place.");
       return {
         name: r.name,
         country: r.country_code,
@@ -475,12 +448,7 @@
       };
     }
 
-    /**
-     * Fetch current, hourly, and daily weather for coordinates.
-     * @param {number} lat
-     * @param {number} lon
-     * @param {string} timezone
-     */
+    /** Fetch current, hourly, and daily weather for coordinates. */
     async function getWeather(lat, lon, timezone = "auto") {
       const url = new URL(ENDPOINTS.weather);
       url.searchParams.set("latitude", lat);
@@ -488,16 +456,12 @@
       url.searchParams.set("current", "temperature_2m,apparent_temperature,is_day,weather_code,wind_speed_10m");
       url.searchParams.set("hourly", "temperature_2m,apparent_temperature,weather_code");
       url.searchParams.set("daily", "temperature_2m_max,temperature_2m_min,weather_code");
+      url.searchParams.set("forecast_days", "1"); // snappier on first paint
       url.searchParams.set("timezone", timezone || "auto");
       return fetchJSON(url.toString());
     }
 
-    /**
-     * Fetch air quality for coordinates (hourly).
-     * @param {number} lat
-     * @param {number} lon
-     * @param {string} timezone
-     */
+    /** Fetch air quality for coordinates (hourly). */
     async function getAirQuality(lat, lon, timezone = "auto") {
       const url = new URL(ENDPOINTS.air);
       url.searchParams.set("latitude", lat);
@@ -507,12 +471,7 @@
       return fetchJSON(url.toString());
     }
 
-    /**
-     * Fetch pollen forecast for coordinates (hourly).
-     * @param {number} lat
-     * @param {number} lon
-     * @param {string} timezone
-     */
+    /** Fetch pollen forecast for coordinates (hourly). */
     async function getPollen(lat, lon, timezone = "auto") {
       const url = new URL(ENDPOINTS.pollen);
       url.searchParams.set("latitude", lat);
@@ -526,10 +485,7 @@
     // Renderers
     // =========================
 
-    /**
-     * Render main weather block (current + daily high/low).
-     * @param {*} wx
-     */
+    /** Render main weather block (current + daily high/low). */
     function renderMain(wx) {
       const current = wx.current;
       const daily = wx.daily;
@@ -544,10 +500,7 @@
       setText("conditionIcon", (WMO[code]?.icon ?? "⛅"));
     }
 
-    /**
-     * Render hourly forecast next 5 hours.
-     * @param {*} wx
-     */
+    /** Render hourly forecast next 5 hours. */
     function renderHourly(wx) {
       const row = el("hourlyRow");
       row.innerHTML = "";
@@ -567,10 +520,7 @@
       setText("insightText", buildInsight(codes, times, start, 6));
     }
 
-    /**
-     * Render Air Quality from latest available hour.
-     * @param {*} aq
-     */
+    /** Render Air Quality from latest available hour. */
     function renderAir(aq) {
       const times = aq.hourly?.time ?? [];
       if (!times.length) {
@@ -599,11 +549,7 @@
       setText("aqTimestamp", `Source: Open‑Meteo • ${new Date(times[idx]).toLocaleString()}`);
     }
 
-    /**
-     * Render Pollen from latest available hour.
-     * Uses alder as "Tree" and ragweed as "Weed".
-     * @param {*} pl
-     */
+    /** Render Pollen from latest available hour (alder=tree, ragweed=weed). */
     function renderPollen(pl) {
       const times = pl.hourly?.time ?? [];
       if (!times.length) {
@@ -656,15 +602,13 @@
         renderPollen(pl);
       } catch (err) {
         console.error(err);
-        // Minimal but visible fallback
+        showError(err?.message || "Failed to load data. Check the console.");
         setText("conditionText", "Unable to load weather.");
         setText("insightText", "Check your internet connection and refresh.");
       }
     }
 
-    /**
-     * Attempt to use browser geolocation and reload dashboard for that point.
-     */
+    /** Attempt to use browser geolocation and reload dashboard for that point. */
     function useMyLocation() {
       if (!("geolocation" in navigator)) {
         alert("Geolocation not supported in this browser.");
@@ -672,8 +616,8 @@
       }
       navigator.geolocation.getCurrentPosition(async (pos) => {
         const { latitude: lat, longitude: lon } = pos.coords;
-        // Optional: reverse geocode to a name
         try {
+          // Reverse geocode to a name (nice for header)
           const url = new URL(ENDPOINTS.geocode);
           url.searchParams.set("latitude", lat);
           url.searchParams.set("longitude", lon);
