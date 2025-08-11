@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Calendar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --secondary-color: #6c757d;
+            --success-color: #198754;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .calendar-container {
+            width: 100%;
+            max-width: 400px;
+            aspect-ratio: 4/5;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            padding: 10px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 5px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .calendar-day:hover {
+            background-color: #f8f9fa;
+        }
+
+        .calendar-day.today {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .calendar-day.has-event::after {
+            content: '';
+            position: absolute;
+            bottom: 3px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+        }
+
+        .event-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .event-list {
+            max-height: calc(100% - 350px);
+            overflow-y: auto;
+        }
+
+        .event-item {
+            padding: 8px;
+            margin: 5px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .weekday-header {
+            text-align: center;
+            font-weight: bold;
+            color: var(--secondary-color);
+            padding: 5px;
+        }
+
+        .month-navigation {
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        /* Event Types */
+        .event-meeting { background-color: rgba(13, 110, 253, 0.1); }
+        .event-birthday { background-color: rgba(25, 135, 84, 0.1); }
+        .event-reminder { background-color: rgba(255, 193, 7, 0.1); }
+        .event-deadline { background-color: rgba(220, 53, 69, 0.1); }
+    </style>
+</head>
+<body>
+    <div class="calendar-container d-flex flex-column">
+        <!-- Calendar Header -->
+        <div class="header">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="month-navigation">
+                    <i class="bi bi-chevron-left"></i>
+                </div>
+                <h4 class="mb-0">March 2024</h4>
+                <div class="month-navigation">
+                    <i class="bi bi-chevron-right"></i>
+                </div>
+            </div>
+            
+            <!-- Weekday Headers -->
+            <div class="calendar-grid mb-2">
+                <div class="weekday-header">Sun</div>
+                <div class="weekday-header">Mon</div>
+                <div class="weekday-header">Tue</div>
+                <div class="weekday-header">Wed</div>
+                <div class="weekday-header">Thu</div>
+                <div class="weekday-header">Fri</div>
+                <div class="weekday-header">Sat</div>
+            </div>
+        </div>
+
+        <!-- Calendar Grid -->
+        <div class="calendar-grid flex-grow-0">
+            <!-- Week 1 -->
+            <div class="calendar-day">25</div>
+            <div class="calendar-day">26</div>
+            <div class="calendar-day">27</div>
+            <div class="calendar-day">28</div>
+            <div class="calendar-day">29</div>
+            <div class="calendar-day has-event">1</div>
+            <div class="calendar-day">2</div>
+            
+            <!-- Week 2 -->
+            <div class="calendar-day has-event">3</div>
+            <div class="calendar-day">4</div>
+            <div class="calendar-day has-event">5</div>
+            <div class="calendar-day">6</div>
+            <div class="calendar-day today">7</div>
+            <div class="calendar-day has-event">8</div>
+            <div class="calendar-day">9</div>
+            
+            <!-- Additional weeks... -->
+        </div>
+
+        <!-- Event List -->
+        <div class="event-list flex-grow-1 p-3">
+            <h5 class="mb-3">Upcoming Events</h5>
+            
+            <!-- Event Examples -->
+            <div class="event-item event-meeting">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <span class="event-dot bg-primary"></span>
+                        Team Meeting
+                    </div>
+                    <small>9:00 AM</small>
+                </div>
+            </div>
+
+            <div class="event-item event-birthday">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <span class="event-dot bg-success"></span>
+                        Sarah's Birthday
+                    </div>
+                    <small>All Day</small>
+                </div>
+            </div>
+
+            <div class="event-item event-reminder">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <span class="event-dot bg-warning"></span>
+                        Dentist Appointment
+                    </div>
+                    <small>2:30 PM</small>
+                </div>
+            </div>
+
+            <div class="event-item event-deadline">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <span class="event-dot bg-danger"></span>
+                        Project Deadline
+                    </div>
+                    <small>11:59 PM</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Event Button -->
+        <div class="p-3">
+            <button class="btn btn-primary w-100">
+                <i class="bi bi-plus-circle me-2"></i>Add Event
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Example event data structure
+        const events = {
+            '2024-03-01': [
+                { type: 'meeting', title: 'Team Meeting', time: '9:00 AM' }
+            ],
+            '2024-03-03': [
+                { type: 'birthday', title: "Sarah's Birthday", time: 'All Day' }
+            ],
+            '2024-03-05': [
+                { type: 'reminder', title: 'Dentist Appointment', time: '2:30 PM' }
+            ],
+            '2024-03-08': [
+                { type: 'deadline', title: 'Project Deadline', time: '11:59 PM' }
+            ]
+        };
+
+        // Add click event listeners to calendar days
+        document.querySelectorAll('.calendar-day').forEach(day => {
+            day.addEventListener('click', function() {
+                document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
+                this.classList.add('selected');
+                // You can add logic here to display events for the selected day
+            });
+        });
+
+        // Add click event listener to add event button
+        document.querySelector('.btn-primary').addEventListener('click', function() {
+            // Add your event creation logic here
+            console.log('Add event clicked');
+        });
+    </script>
+</body>
+</html> 

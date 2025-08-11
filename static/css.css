@@ -1,0 +1,193 @@
+        /* Default Light Mode */
+        body {
+            transition: background-color 0.5s, color 0.5s;
+        }
+
+        /* Morning Theme */
+        .morning-theme {
+            background-color: #FFFAF0; /* Light Beige */
+            color: #333; /* Dark Gray */
+        }
+
+        /* Afternoon Theme */
+        .afternoon-theme {
+            background-image: url('./static/noite1.png');
+            /*background-color: #F5DEB3; /* Wheat */
+            color: #222; /* Darker text */
+        }
+
+        /* Night Theme */
+        .night-theme {
+            background-image: url('./static/noite1.png');
+            background-color: #222; /* Dark background */
+            color: #F8F9FA; /* Light text */
+        }
+
+        body {
+            /*background-color: #2d3436;
+            color: white;*/
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        
+        .weather-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .large-temp {
+            font-size: 6rem;
+            /*font-weight: 300;*/
+        }
+
+        .mid-temp {
+            font-size: 3rem;
+            font-weight: 150;
+        }
+        
+        .weather-icon {
+            width: 40px;
+            height: 40px;
+            filter: brightness(0) invert(1);
+        }
+        
+        .hourly-temp {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+        
+        .update-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 10px 20px;
+        }
+        
+        .back-button {
+            font-size: 1.5rem;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .weather-insight {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        /* 5-Day Forecast Styles */
+        .forecast-day {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .forecast-day:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .forecast-date {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .forecast-icon {
+            width: 50px;
+            height: 50px;
+            margin: 10px auto;
+            filter: brightness(0) invert(1);
+        }
+
+        .forecast-temp {
+            font-size: 1.3rem;
+            font-weight: 500;
+        }
+
+        .forecast-condition {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Air Quality Styles */
+        .air-quality-item {
+            text-align: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .quality-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .quality-value {
+            font-size: 1.4rem;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .quality-unit {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+
+        .quality-status {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            display: inline-block;
+        }
+
+        .quality-status.good {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: #2ecc71;
+        }
+
+        .quality-status.moderate {
+            background-color: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .quality-status.poor {
+            background-color: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+        }
+
+        /* Pollen Level Styles */
+        .pollen-item {
+            text-align: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .pollen-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .pollen-value {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        /* Hover effects */
+        .air-quality-item:hover,
+        .pollen-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            transition: all 0.3s ease;
+        }

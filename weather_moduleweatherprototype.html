@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Dashboard</title>
+    
+    <!-- Application Information -->
+    <!--
+    Title: Modern Weather Dashboard
+    Description: A responsive weather dashboard that displays current weather conditions,
+    "feels like" temperature, high/low temperatures, weather insights, and hourly forecast.
+    The design is inspired by Google's Material Design weather app.
+    
+    Features:
+    - Current temperature with weather condition
+    - Feels like temperature
+    - High and low temperatures
+    - Weather insights panel
+    - Hourly forecast with temperature and conditions
+    - Location update functionality
+    - Responsive design that works on all devices
+    
+    Original Prompt: Create a bootstrap5 version of a modern weather dashboard
+    -->
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        body {
+            background-color: #2d3436;
+            color: white;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        
+        .weather-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .large-temp {
+            font-size: 6rem;
+            font-weight: 300;
+        }
+        
+        .weather-icon {
+            width: 40px;
+            height: 40px;
+            filter: brightness(0) invert(1);
+        }
+        
+        .hourly-temp {
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+        
+        .update-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 10px 20px;
+        }
+        
+        .back-button {
+            font-size: 1.5rem;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .weather-insight {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <a href="#" class="back-button">←</a>
+                <span class="ms-3 h4">San Francisco</span>
+            </div>
+        </div>
+
+        <!-- Main Weather Display -->
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <div class="mb-2">Cloudy</div>
+                <div class="large-temp">52°</div>
+                <div class="mb-2">Feels like 49°</div>
+                <div>High 61° • Low 50°</div>
+            </div>
+        </div>
+
+        <!-- Weather Insight Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="weather-insight">
+                    <h5 class="mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
+                            <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828l.645-1.937zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.734 1.734 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.734 1.734 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.734 1.734 0 0 0 3.407 2.31l.387-1.162zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732L10.863.1z"/>
+                        </svg>
+                        Weather insight
+                    </h5>
+                    <p class="mb-0">Light rain from 6:48 PM to 8:00 PM</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hourly Forecast Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="weather-insight">
+                    <h5 class="mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
+                            <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+                            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+                        </svg>
+                        Hourly forecast
+                    </h5>
+                    <div class="row text-center">
+                        <div class="col">
+                            <div class="hourly-temp">52°</div>
+                            <img src="https://cdn-icons-png.flaticon.com/512/414/414927.png" alt="Cloudy" class="weather-icon my-2">
+                            <div>Now</div>
+                        </div>
+                        <div class="col">
+                            <div class="hourly-temp">54°</div>
+                            <img src="https://cdn-icons-png.flaticon.com/512/414/414927.png" alt="Cloudy" class="weather-icon my-2">
+                            <div>10 AM</div>
+                        </div>
+                        <div class="col">
+                            <div class="hourly-temp">56°</div>
+                            <img src="https://cdn-icons-png.flaticon.com/512/414/414927.png" alt="Cloudy" class="weather-icon my-2">
+                            <div>11 AM</div>
+                        </div>
+                        <div class="col">
+                            <div class="hourly-temp">57°</div>
+                            <img src="https://cdn-icons-png.flaticon.com/512/414/414927.png" alt="Cloudy" class="weather-icon my-2">
+                            <div>12 PM</div>
+                        </div>
+                        <div class="col">
+                            <div class="hourly-temp">58°</div>
+                            <img src="https://cdn-icons-png.flaticon.com/512/414/414927.png" alt="Cloudy" class="weather-icon my-2">
+                            <div>1 PM</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Update Location Button -->
+        <div class="row">
+            <div class="col-12 text-center">
+                <button class="update-btn">Update location permissions</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 
