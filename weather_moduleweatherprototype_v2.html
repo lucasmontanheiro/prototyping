@@ -1,243 +1,704 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather Dashboard</title>
-    
-    <!-- Application Information -->
-    <!--
-    Title: Modern Weather Dashboard
-    Description: A responsive weather dashboard that displays current weather conditions,
-    "feels like" temperature, high/low temperatures, weather insights, and hourly forecast.
-    The design is inspired by Google's Material Design weather app.
-    
-    Features:
-    - Current temperature with weather condition
-    - Feels like temperature
-    - High and low temperatures
-    - Weather insights panel
-    - Hourly forecast with temperature and conditions
-    - Location update functionality
-    - Responsive design that works on all devices
-    
-    Original Prompt: Create a bootstrap5 version of a modern weather dashboard
-    -->
-    
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
-    <style>
-        body {
-            background-color: #2d3436;
-            color: white;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-        }
-        
-        .weather-card {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-        }
-        
-        .large-temp {
-            font-size: 6rem;
-            font-weight: 300;
-        }
-        
-        .weather-icon {
-            width: 40px;
-            height: 40px;
-            filter: brightness(0) invert(1);
-        }
-        
-        .hourly-temp {
-            font-size: 1.2rem;
-            font-weight: 500;
-        }
-        
-        .update-btn {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: none;
-            border-radius: 25px;
-            padding: 10px 20px;
-        }
-        
-        .back-button {
-            font-size: 1.5rem;
-            color: white;
-            text-decoration: none;
-        }
-        
-        .weather-insight {
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 15px;
-            padding: 15px;
-            margin: 10px 0;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Weather Dashboard — São Paulo</title>
+
+  <!--
+  ============================================================================
+  Title: Modern Weather Dashboard (Open‑Meteo Edition, No API Key)
+  Purpose: Provide a sleek, responsive weather dashboard powered by a free,
+           keyless API (Open‑Meteo) with real data for São Paulo, Brazil.
+  Description:
+    - Responsive Bootstrap 5 UI inspired by Material Design.
+    - Live data for:
+        • Current temperature & conditions
+        • Feels like (apparent temperature)
+        • Daily high / low
+        • Hourly forecast (next 5 hours)
+        • Air Quality (PM10, PM2.5, Ozone)
+        • Pollen levels (Tree/Grass/Weed approximations)
+    - Defaults to São Paulo, Brazil using Open‑Meteo Geocoding.
+    - Optional “Use my location” via browser Geolocation API.
+    - No API key needed.
+
+  Features:
+    - Modular, DRY JavaScript with clear, developer‑friendly comments.
+    - Graceful fallbacks if any endpoint returns missing data.
+    - Mobile‑first, fully responsive layout with Bootstrap 5.
+    - Simple WMO → Condition text/icon mapping.
+
+  Data Providers (no key required):
+    - Geocoding:   https://geocoding-api.open-meteo.com
+    - Weather:     https://api.open-meteo.com
+    - Air Quality: https://air-quality-api.open-meteo.com
+    - Pollen:      https://pollen-api.open-meteo.com
+
+  Original Prompt: Create a bootstrap5 version of a modern weather dashboard
+  This Prompt: "Make a version of this template with a weather API (no api key)
+               connected and information about São Paulo, Brazil."
+
+  Notes:
+    - You can adapt the default city by changing DEFAULT_CITY below.
+    - All functions are documented for future enhancements.
+  ============================================================================
+  -->
+
+  <!-- Bootstrap 5 CSS & Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+
+  <!-- Custom CSS -->
+  <style>
+    :root{
+      --glass-bg: rgba(255,255,255,0.08);
+      --glass-deeper: rgba(255,255,255,0.12);
+    }
+    html,body { height: 100%; }
+    body {
+      background: linear-gradient(160deg, #141e30 0%, #243b55 100%);
+      color: #fff;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+    .weather-card {
+      background: var(--glass-bg);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+    .large-temp {
+      font-size: clamp(3.5rem, 8vw, 6rem);
+      font-weight: 300;
+      line-height: 1;
+    }
+    .update-btn {
+      background: rgba(255, 255, 255, 0.18);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      padding: 10px 20px;
+    }
+    .back-button {
+      font-size: 1.5rem;
+      color: white;
+      text-decoration: none;
+    }
+    .weather-insight {
+      background: var(--glass-deeper);
+      border-radius: 15px;
+      padding: 16px;
+      margin: 10px 0;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .quality-label,.pollen-label { opacity: 0.85; font-size: .9rem; }
+    .quality-value,.pollen-value { font-size: 1.25rem; font-weight: 600; }
+    .quality-status.good { color: #8ef58a; }
+    .quality-status.moderate { color: #ffd166; }
+    .quality-status.poor { color: #ff7b7b; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      background: rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: .35rem .65rem;
+      border-radius: 999px;
+      font-size: .9rem;
+    }
+    .minitext { opacity: .85; font-size: .95rem; }
+    .hour-col { min-width: 84px; }
+    .icon-xl { font-size: 3rem; line-height: 1; }
+    .fade-skeleton {
+      position: relative;
+      overflow: hidden;
+      background: rgba(255,255,255,0.06);
+      border-radius: 8px;
+      min-height: 24px;
+    }
+    .fade-skeleton::after{
+      content:"";
+      position:absolute; inset:0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+      animation: shimmer 1.3s infinite;
+    }
+    @keyframes shimmer { 0% { transform: translateX(-100%);} 100% { transform: translateX(100%);} }
+  </style>
 </head>
 <body>
-    <div class="container py-4">
-        <!-- Header Section -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <a href="#" class="back-button">←</a>
-                <span class="ms-3 h4">San Francisco</span>
-            </div>
-        </div>
-
-        <!-- Main Weather Display -->
-        <div class="row mb-4">
-            <div class="col-12 text-center">
-                <div class="mb-2">Cloudy</div>
-                <div class="large-temp">52°</div>
-                <div class="mb-2">Feels like 49°</div>
-                <div>High 61° • Low 50°</div>
-            </div>
-        </div>
-
-        <!-- Weather Insight Section -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="weather-insight">
-                    <h5 class="mb-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stars" viewBox="0 0 16 16">
-                            <path d="M7.657 6.247c.11-.33.576-.33.686 0l.645 1.937a2.89 2.89 0 0 0 1.829 1.828l1.936.645c.33.11.33.576 0 .686l-1.937.645a2.89 2.89 0 0 0-1.828 1.829l-.645 1.936a.361.361 0 0 1-.686 0l-.645-1.937a2.89 2.89 0 0 0-1.828-1.828l-1.937-.645a.361.361 0 0 1 0-.686l1.937-.645a2.89 2.89 0 0 0 1.828-1.828l.645-1.937zM3.794 1.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387A1.734 1.734 0 0 0 4.593 5.69l-.387 1.162a.217.217 0 0 1-.412 0L3.407 5.69A1.734 1.734 0 0 0 2.31 4.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387A1.734 1.734 0 0 0 3.407 2.31l.387-1.162zM10.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.156 1.156 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.156 1.156 0 0 0-.732-.732L9.1 2.137a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732L10.863.1z"/>
-                        </svg>
-                        Weather insight
-                    </h5>
-                    <p class="mb-0">Light rain from 6:48 PM to 8:00 PM</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Air Quality Section -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="weather-insight">
-                    <h5 class="mb-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-wind" viewBox="0 0 16 16">
-                            <path d="M12.5 2A2.5 2.5 0 0 0 10 4.5a.5.5 0 0 1-1 0A3.5 3.5 0 1 1 12.5 8H.5a.5.5 0 0 1 0-1h12a2.5 2.5 0 0 0 0-5zm-7 1a1 1 0 0 0-1 1 .5.5 0 0 1-1 0 2 2 0 1 1 2 2h-5a.5.5 0 0 1 0-1h5a1 1 0 0 0 0-2zM0 9.5A.5.5 0 0 1 .5 9h10.042a3 3 0 1 1-3 3 .5.5 0 0 1 1 0 2 2 0 1 0 2-2H.5a.5.5 0 0 1-.5-.5z"/>
-                        </svg>
-                        Air Quality
-                    </h5>
-                    <div class="row">
-                        <div class="col-4">
-                            <div class="air-quality-item">
-                                <div class="quality-label">PM10</div>
-                                <div class="quality-value">10.9</div>
-                                <div class="quality-unit">µg/m³</div>
-                                <div class="quality-status good">Good</div>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="air-quality-item">
-                                <div class="quality-label">PM2.5</div>
-                                <div class="quality-value">9.8</div>
-                                <div class="quality-unit">µg/m³</div>
-                                <div class="quality-status good">Good</div>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="air-quality-item">
-                                <div class="quality-label">Ozone</div>
-                                <div class="quality-value">80</div>
-                                <div class="quality-unit">µg/m³</div>
-                                <div class="quality-status moderate">Moderate</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Pollen Levels Section -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="weather-insight">
-                    <h5 class="mb-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-flower1" viewBox="0 0 16 16">
-                            <path d="M6.174 1.184a2 2 0 0 1 3.652 0A2 2 0 0 1 12.99 3.01a2 2 0 0 1 1.826 3.164 2 2 0 0 1 0 3.652 2 2 0 0 1-1.826 3.164 2 2 0 0 1-3.164 1.826 2 2 0 0 1-3.652 0A2 2 0 0 1 3.01 12.99a2 2 0 0 1-1.826-3.164 2 2 0 0 1 0-3.652A2 2 0 0 1 3.01 3.01a2 2 0 0 1 3.164-1.826zM8 1a1 1 0 0 0-.998 1.03l.01.091c.012.077.029.176.054.296.049.241.122.542.213.887.182.688.428 1.513.676 2.314L8 5.762l.045-.144c.248-.8.494-1.626.676-2.314.091-.345.164-.646.213-.887a4.997 4.997 0 0 0 .064-.386L9 2a1 1 0 0 0-1-1zM2 9l.03-.002.091-.01a4.99 4.99 0 0 0 .296-.054c.241-.049.542-.122.887-.213a60.59 60.59 0 0 0 2.314-.676L5.762 8l-.144-.045a60.59 60.59 0 0 0-2.314-.676 16.705 16.705 0 0 0-.887-.213 4.99 4.99 0 0 0-.386-.064L2 7a1 1 0 1 0 0 2zm7 5-.002-.03a5.005 5.005 0 0 0-.064-.386 16.398 16.398 0 0 0-.213-.888 60.582 60.582 0 0 0-.676-2.314L8 10.238l-.045.144c-.248.8-.494 1.626-.676 2.314-.091.345-.164.646-.213.887a4.996 4.996 0 0 0-.064.386L7 14a1 1 0 1 0 2 0zm-5.696-2.134.025-.017a5.001 5.001 0 0 0 .303-.248c.184-.164.408-.377.661-.629A60.614 60.614 0 0 0 5.96 9.23l.103-.111-.147.033a60.88 60.88 0 0 0-2.343.572c-.344.093-.64.18-.874.258a5.063 5.063 0 0 0-.367.138l-.027.014a1 1 0 1 0 1 1.732zM4.5 14.062a1 1 0 0 0 1.366-.366l.014-.027c.01-.02.021-.048.036-.084a5.09 5.09 0 0 0 .102-.283c.078-.233.165-.53.258-.874a60.6 60.6 0 0 0 .572-2.343l.033-.147-.11.102a60.848 60.848 0 0 0-1.743 1.667 17.07 17.07 0 0 0-.629.66 5.06 5.06 0 0 0-.248.304l-.017.025a1 1 0 0 0 .366 1.366zm9.196-8.196a1 1 0 0 0-1-1.732l-.025.017a4.951 4.951 0 0 0-.303.248 16.69 16.69 0 0 0-.661.629A60.72 60.72 0 0 0 10.04 6.77l-.102.111.147-.033a60.6 60.6 0 0 0 2.342-.572c.345-.093.642-.18.875-.258a4.993 4.993 0 0 0 .367-.138.53.53 0 0 0 .027-.014zM11.5 1.938a1 1 0 0 0-1.366.366l-.014.027c-.01.02-.021.048-.036.084a5.09 5.09 0 0 0-.102.283c-.078.233-.165.53-.258.875a60.62 60.62 0 0 0-.572 2.342l-.033.147.11-.102a60.848 60.848 0 0 0 1.743-1.667c.252-.253.465-.477.629-.66a5.001 5.001 0 0 0 .248-.304l.017-.025a1 1 0 0 0-.366-1.366zM14 9a1 1 0 0 0 0-2l-.03.002a4.996 4.996 0 0 0-.386.064c-.242.049-.543.122-.888.213-.688.182-1.513.428-2.314.676L10.238 8l.144.045c.8.248 1.626.494 2.314.676.345.091.646.164.887.213a4.996 4.996 0 0 0 .386.064L14 9z"/>
-                        </svg>
-                        Pollen Levels
-                    </h5>
-                    <div class="row">
-                        <div class="col-4">
-                            <div class="pollen-item">
-                                <div class="pollen-label">Tree</div>
-                                <div class="pollen-value">N/A</div>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="pollen-item">
-                                <div class="pollen-label">Grass</div>
-                                <div class="pollen-value">N/A</div>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="pollen-item">
-                                <div class="pollen-label">Weed</div>
-                                <div class="pollen-value">N/A</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Hourly Forecast Section -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="weather-insight">
-                    <h5 class="mb-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
-                            <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
-                            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
-                        </svg>
-                        Hourly forecast
-                    </h5>
-                    <div class="row text-center">
-                        <div class="col">
-                            <div class="hourly-temp">52°</div>
-                            <img src="https://cdn-icons-png.flaticon.com/512/414/414927.png" alt="Cloudy" class="weather-icon my-2">
-                            <div>Now</div>
-                        </div>
-                        <div class="col">
-                            <div class="hourly-temp">54°</div>
-                            <img src="https://cdn-icons-png.flaticon.com/512/414/414927.png" alt="Cloudy" class="weather-icon my-2">
-                            <div>10 AM</div>
-                        </div>
-                        <div class="col">
-                            <div class="hourly-temp">56°</div>
-                            <img src="https://cdn-icons-png.flaticon.com/512/414/414927.png" alt="Cloudy" class="weather-icon my-2">
-                            <div>11 AM</div>
-                        </div>
-                        <div class="col">
-                            <div class="hourly-temp">57°</div>
-                            <img src="https://cdn-icons-png.flaticon.com/512/414/414927.png" alt="Cloudy" class="weather-icon my-2">
-                            <div>12 PM</div>
-                        </div>
-                        <div class="col">
-                            <div class="hourly-temp">58°</div>
-                            <img src="https://cdn-icons-png.flaticon.com/512/414/414927.png" alt="Cloudy" class="weather-icon my-2">
-                            <div>1 PM</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Update Location Button -->
-        <div class="row">
-            <div class="col-12 text-center">
-                <button class="update-btn">Update location permissions</button>
-            </div>
-        </div>
+  <div class="container py-4">
+    <!-- Header Section -->
+    <div class="row mb-4 align-items-center">
+      <div class="col-12 d-flex align-items-center gap-2">
+        <a href="#" class="back-button" title="Back"><i class="bi bi-arrow-left"></i></a>
+        <span id="cityName" class="ms-1 h4 mb-0">São Paulo</span>
+        <span id="countryName" class="chip">BR</span>
+        <span id="updatedAt" class="ms-auto minitext"></span>
+      </div>
     </div>
 
-    <!-- Bootstrap 5 JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Main Weather Display -->
+    <div class="row mb-4">
+      <div class="col-12 text-center weather-card p-4">
+        <div class="mb-2" id="conditionText">Loading…</div>
+        <div class="icon-xl mb-2" id="conditionIcon" aria-hidden="true">⛅</div>
+        <div class="large-temp"><span id="tempNow">--</span>°</div>
+        <div class="mb-2" id="feelsLike">Feels like --°</div>
+        <div>High <span id="tempHigh">--</span>° • Low <span id="tempLow">--</span>°</div>
+      </div>
+    </div>
+
+    <!-- Weather Insight Section -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="weather-insight">
+          <h5 class="mb-3">
+            <i class="bi bi-stars me-2"></i>
+            Weather insight
+          </h5>
+          <p class="mb-0" id="insightText">Finding the best time window…</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Air Quality Section -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="weather-insight">
+          <h5 class="mb-3">
+            <i class="bi bi-wind me-2"></i>
+            Air Quality (latest hour)
+          </h5>
+          <div class="row text-center g-3">
+            <div class="col-4">
+              <div class="air-quality-item">
+                <div class="quality-label">PM10</div>
+                <div class="quality-value" id="pm10">--</div>
+                <div class="quality-unit">µg/m³</div>
+                <div class="quality-status" id="pm10Status">—</div>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="air-quality-item">
+                <div class="quality-label">PM2.5</div>
+                <div class="quality-value" id="pm25">--</div>
+                <div class="quality-unit">µg/m³</div>
+                <div class="quality-status" id="pm25Status">—</div>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="air-quality-item">
+                <div class="quality-label">Ozone</div>
+                <div class="quality-value" id="ozone">--</div>
+                <div class="quality-unit">µg/m³</div>
+                <div class="quality-status" id="ozoneStatus">—</div>
+              </div>
+            </div>
+          </div>
+          <div class="minitext mt-2 text-center" id="aqTimestamp"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pollen Levels Section -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="weather-insight">
+          <h5 class="mb-3">
+            <i class="bi bi-flower1 me-2"></i>
+            Pollen Levels (hourly)
+          </h5>
+          <div class="row text-center g-3">
+            <div class="col-4">
+              <div class="pollen-item">
+                <div class="pollen-label">Tree*</div>
+                <div class="pollen-value" id="pollenTree">--</div>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="pollen-item">
+                <div class="pollen-label">Grass</div>
+                <div class="pollen-value" id="pollenGrass">--</div>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="pollen-item">
+                <div class="pollen-label">Weed**</div>
+                <div class="pollen-value" id="pollenWeed">--</div>
+              </div>
+            </div>
+          </div>
+          <div class="minitext mt-2">
+            *Using alder as a tree proxy. **Using ragweed as a weed proxy.
+          </div>
+          <div class="minitext" id="pollenTimestamp"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hourly Forecast Section -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="weather-insight">
+          <h5 class="mb-3">
+            <i class="bi bi-clock me-2"></i>
+            Hourly forecast (next 5 hours)
+          </h5>
+          <div id="hourlyRow" class="row text-center flex-nowrap overflow-auto g-3">
+            <!-- JS will inject hour cards -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Update Location Button -->
+    <div class="row">
+      <div class="col-12 text-center">
+        <button id="useMyLocation" class="update-btn">
+          <i class="bi bi-geo me-1"></i> Use my location
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- App Script: Modular, documented, DRY -->
+  <script>
+    // =========================
+    // Configuration & Constants
+    // =========================
+
+    /** Default city to load on startup (São Paulo, BR) */
+    const DEFAULT_CITY = "São Paulo";
+    const DEFAULT_COUNTRY = "BR";
+
+    /** Base endpoints (Open‑Meteo APIs; no key required) */
+    const ENDPOINTS = {
+      geocode: "https://geocoding-api.open-meteo.com/v1/search",
+      weather: "https://api.open-meteo.com/v1/forecast",
+      air:     "https://air-quality-api.open-meteo.com/v1/air-quality",
+      pollen:  "https://pollen-api.open-meteo.com/v1/forecast"
+    };
+
+    /** Map of WMO weather codes to labels and icons (Bootstrap Icons / emoji) */
+    const WMO = {
+      0:  {label: "Clear sky", icon: "☀️"},
+      1:  {label: "Mostly clear", icon: "🌤️"},
+      2:  {label: "Partly cloudy", icon: "⛅"},
+      3:  {label: "Cloudy", icon: "☁️"},
+      45: {label: "Fog", icon: "🌫️"},
+      48: {label: "Depositing rime fog", icon:"🌫️"},
+      51: {label: "Light drizzle", icon:"🌦️"},
+      53: {label: "Drizzle", icon:"🌦️"},
+      55: {label: "Dense drizzle", icon:"🌧️"},
+      56: {label: "Freezing drizzle", icon:"🌧️"},
+      57: {label: "Dense freezing drizzle", icon:"🌧️"},
+      61: {label: "Light rain", icon:"🌧️"},
+      63: {label: "Rain", icon:"🌧️"},
+      65: {label: "Heavy rain", icon:"🌧️"},
+      66: {label: "Freezing rain", icon:"🌧️"},
+      67: {label: "Heavy freezing rain", icon:"🌧️"},
+      71: {label: "Light snow", icon:"🌨️"},
+      73: {label: "Snow", icon:"🌨️"},
+      75: {label: "Heavy snow", icon:"🌨️"},
+      77: {label: "Snow grains", icon:"🌨️"},
+      80: {label: "Rain showers", icon:"🌦️"},
+      81: {label: "Heavy rain showers", icon:"🌧️"},
+      82: {label: "Violent rain showers", icon:"🌧️"},
+      85: {label: "Snow showers", icon:"🌨️"},
+      86: {label: "Heavy snow showers", icon:"🌨️"},
+      95: {label: "Thunderstorm", icon:"⛈️"},
+      96: {label: "Thunderstorm w/ hail", icon:"⛈️"},
+      99: {label: "Thunderstorm w/ heavy hail", icon:"⛈️"}
+    };
+
+    // =========================
+    // Utility Functions (DRY)
+    // =========================
+
+    /**
+     * Small wrapper for fetch that throws on non-OK responses.
+     * @param {string} url - full URL
+     * @returns {Promise<any>}
+     */
+    async function fetchJSON(url) {
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error(`Request failed: ${res.status} ${res.statusText}`);
+      }
+      return res.json();
+    }
+
+    /**
+     * Get nearest index in a sorted ISO time array for now (or a supplied date).
+     * @param {string[]} isoTimes - array of ISO strings
+     * @param {Date} [ref=new Date()]
+     * @returns {number} index
+     */
+    function indexNearestHour(isoTimes, ref = new Date()) {
+      const target = ref.getTime();
+      let bestIdx = 0, bestDiff = Infinity;
+      for (let i = 0; i < isoTimes.length; i++) {
+        const t = new Date(isoTimes[i]).getTime();
+        const diff = Math.abs(t - target);
+        if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+      }
+      return bestIdx;
+    }
+
+    /**
+     * Format an ISO timestamp into local hour label (e.g., "10 AM").
+     * @param {string} iso
+     * @returns {string}
+     */
+    function hourLabel(iso) {
+      const d = new Date(iso);
+      return d.toLocaleTimeString([], { hour: "numeric" });
+    }
+
+    /**
+     * Returns air quality status class & label for a given pollutant value.
+     * Basic EU-like cutoffs for demo; tune as needed.
+     * @param {number} value
+     * @param {"pm10"|"pm25"|"ozone"} type
+     * @returns {{className:string,label:string}}
+     */
+    function aqBand(value, type) {
+      if (value == null || isNaN(value)) return { className: "", label: "—" };
+      let good, moderate;
+      if (type === "pm10") { good = 20; moderate = 40; }
+      else if (type === "pm25") { good = 10; moderate = 20; }
+      else { // ozone as µg/m³ rough bands
+        good = 100; moderate = 160;
+      }
+      if (value <= good) return { className: "good", label: "Good" };
+      if (value <= moderate) return { className: "moderate", label: "Moderate" };
+      return { className: "poor", label: "Poor" };
+    }
+
+    /**
+     * Safe number display with fallback.
+     * @param {number|undefined|null} n
+     * @param {number} digits
+     * @returns {string}
+     */
+    function fmtNum(n, digits = 0) {
+      return (n == null || isNaN(n)) ? "--" : Number(n).toFixed(digits);
+    }
+
+    /**
+     * Create a small hourly card element.
+     * @param {string} timeISO
+     * @param {number} tempC
+     * @param {number} wmo
+     * @returns {HTMLElement}
+     */
+    function makeHourCard(timeISO, tempC, wmo) {
+      const col = document.createElement("div");
+      col.className = "col hour-col";
+      const sTime = document.createElement("div");
+      sTime.className = "minitext";
+      sTime.textContent = hourLabel(timeISO);
+      const icon = document.createElement("div");
+      icon.className = "icon-xl my-1";
+      icon.textContent = (WMO[wmo]?.icon ?? "⛅");
+      const t = document.createElement("div");
+      t.className = "hourly-temp";
+      t.textContent = `${fmtNum(tempC)}°`;
+      col.appendChild(t);
+      col.appendChild(icon);
+      col.appendChild(sTime);
+      return col;
+    }
+
+    /**
+     * Build a simple "insight" string for next hours (rain vs. clear),
+     * using WMO codes (>=61 considered rain).
+     * @param {number[]} codes
+     * @param {string[]} times
+     * @param {number} startIdx
+     * @param {number} horizon
+     * @returns {string}
+     */
+    function buildInsight(codes, times, startIdx, horizon = 6) {
+      const end = Math.min(codes.length, startIdx + horizon);
+      let rainySlots = [];
+      for (let i = startIdx; i < end; i++) {
+        const code = codes[i];
+        if (code >= 61 && code <= 67 || (code >= 80 && code <= 82)) {
+          rainySlots.push(hourLabel(times[i]));
+        }
+      }
+      if (rainySlots.length === 0) {
+        return `No rain expected in the next ${end - startIdx} hours.`;
+      }
+      return `Possible rain around: ${rainySlots.join(", ")}.`;
+    }
+
+    // =========================
+    // DOM Helpers
+    // =========================
+    const el = (id) => document.getElementById(id);
+
+    function setText(id, text) { el(id).textContent = text; }
+    function setHTML(id, html) { el(id).innerHTML = html; }
+
+    // =========================
+    // Data Fetchers
+    // =========================
+
+    /**
+     * Geocode a place name to lat/lon via Open‑Meteo Geocoding.
+     * @param {string} name
+     * @param {string} countryCode optional country filter like "BR"
+     * @returns {Promise<{name:string,country:string,latitude:number,longitude:number,timezone:string}>}
+     */
+    async function geocode(name, countryCode) {
+      const url = new URL(ENDPOINTS.geocode);
+      url.searchParams.set("name", name);
+      url.searchParams.set("count", "1");
+      url.searchParams.set("language", "en");
+      url.searchParams.set("format", "json");
+      if (countryCode) url.searchParams.set("country", countryCode);
+      const data = await fetchJSON(url.toString());
+      const r = data?.results?.[0];
+      if (!r) throw new Error("No geocoding result.");
+      return {
+        name: r.name,
+        country: r.country_code,
+        latitude: r.latitude,
+        longitude: r.longitude,
+        timezone: r.timezone
+      };
+    }
+
+    /**
+     * Fetch current, hourly, and daily weather for coordinates.
+     * @param {number} lat
+     * @param {number} lon
+     * @param {string} timezone
+     */
+    async function getWeather(lat, lon, timezone = "auto") {
+      const url = new URL(ENDPOINTS.weather);
+      url.searchParams.set("latitude", lat);
+      url.searchParams.set("longitude", lon);
+      url.searchParams.set("current", "temperature_2m,apparent_temperature,is_day,weather_code,wind_speed_10m");
+      url.searchParams.set("hourly", "temperature_2m,apparent_temperature,weather_code");
+      url.searchParams.set("daily", "temperature_2m_max,temperature_2m_min,weather_code");
+      url.searchParams.set("timezone", timezone || "auto");
+      return fetchJSON(url.toString());
+    }
+
+    /**
+     * Fetch air quality for coordinates (hourly).
+     * @param {number} lat
+     * @param {number} lon
+     * @param {string} timezone
+     */
+    async function getAirQuality(lat, lon, timezone = "auto") {
+      const url = new URL(ENDPOINTS.air);
+      url.searchParams.set("latitude", lat);
+      url.searchParams.set("longitude", lon);
+      url.searchParams.set("hourly", "pm10,pm2_5,ozone");
+      url.searchParams.set("timezone", timezone || "auto");
+      return fetchJSON(url.toString());
+    }
+
+    /**
+     * Fetch pollen forecast for coordinates (hourly).
+     * @param {number} lat
+     * @param {number} lon
+     * @param {string} timezone
+     */
+    async function getPollen(lat, lon, timezone = "auto") {
+      const url = new URL(ENDPOINTS.pollen);
+      url.searchParams.set("latitude", lat);
+      url.searchParams.set("longitude", lon);
+      url.searchParams.set("hourly", "alder_pollen,grass_pollen,ragweed_pollen");
+      url.searchParams.set("timezone", timezone || "auto");
+      return fetchJSON(url.toString());
+    }
+
+    // =========================
+    // Renderers
+    // =========================
+
+    /**
+     * Render main weather block (current + daily high/low).
+     * @param {*} wx
+     */
+    function renderMain(wx) {
+      const current = wx.current;
+      const daily = wx.daily;
+
+      const code = current?.weather_code ?? 2;
+      setText("conditionText", WMO[code]?.label ?? "Partly cloudy");
+      setText("tempNow", fmtNum(current?.temperature_2m));
+      setText("feelsLike", `Feels like ${fmtNum(current?.apparent_temperature)}°`);
+      setText("tempHigh", fmtNum(daily?.temperature_2m_max?.[0]));
+      setText("tempLow", fmtNum(daily?.temperature_2m_min?.[0]));
+      setText("updatedAt", `Updated: ${new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"})}`);
+      setText("conditionIcon", (WMO[code]?.icon ?? "⛅"));
+    }
+
+    /**
+     * Render hourly forecast next 5 hours.
+     * @param {*} wx
+     */
+    function renderHourly(wx) {
+      const row = el("hourlyRow");
+      row.innerHTML = "";
+      const times = wx.hourly?.time ?? [];
+      const temps = wx.hourly?.temperature_2m ?? [];
+      const codes = wx.hourly?.weather_code ?? [];
+      if (!times.length) {
+        row.innerHTML = '<div class="minitext">No hourly data.</div>';
+        return;
+      }
+      const start = indexNearestHour(times);
+      const count = 5;
+      for (let i = 0; i < count && (start + i) < times.length; i++) {
+        row.appendChild(makeHourCard(times[start + i], temps[start + i], codes[start + i]));
+      }
+      // Insight
+      setText("insightText", buildInsight(codes, times, start, 6));
+    }
+
+    /**
+     * Render Air Quality from latest available hour.
+     * @param {*} aq
+     */
+    function renderAir(aq) {
+      const times = aq.hourly?.time ?? [];
+      if (!times.length) {
+        setText("pm10","--"); setText("pm25","--"); setText("ozone","--");
+        setText("pm10Status","—"); setText("pm25Status","—"); setText("ozoneStatus","—");
+        setText("aqTimestamp","No air quality data.");
+        return;
+      }
+      const idx = indexNearestHour(times);
+      const pm10v = aq.hourly.pm10?.[idx];
+      const pm25v = aq.hourly.pm2_5?.[idx];
+      const ozonev = aq.hourly.ozone?.[idx];
+
+      setText("pm10", fmtNum(pm10v, 1));
+      setText("pm25", fmtNum(pm25v, 1));
+      setText("ozone", fmtNum(ozonev, 0));
+
+      const b10 = aqBand(pm10v, "pm10");
+      const b25 = aqBand(pm25v, "pm25");
+      const bo3 = aqBand(ozonev, "ozone");
+
+      const pm10S = el("pm10Status"); pm10S.className = `quality-status ${b10.className}`; pm10S.textContent = b10.label;
+      const pm25S = el("pm25Status"); pm25S.className = `quality-status ${b25.className}`; pm25S.textContent = b25.label;
+      const o3S   = el("ozoneStatus"); o3S.className   = `quality-status ${bo3.className}`;  o3S.textContent = bo3.label;
+
+      setText("aqTimestamp", `Source: Open‑Meteo • ${new Date(times[idx]).toLocaleString()}`);
+    }
+
+    /**
+     * Render Pollen from latest available hour.
+     * Uses alder as "Tree" and ragweed as "Weed".
+     * @param {*} pl
+     */
+    function renderPollen(pl) {
+      const times = pl.hourly?.time ?? [];
+      if (!times.length) {
+        setText("pollenTree","--"); setText("pollenGrass","--"); setText("pollenWeed","--");
+        setText("pollenTimestamp","No pollen data.");
+        return;
+      }
+      const idx = indexNearestHour(times);
+      setText("pollenTree", fmtNum(pl.hourly.alder_pollen?.[idx], 0));
+      setText("pollenGrass", fmtNum(pl.hourly.grass_pollen?.[idx], 0));
+      setText("pollenWeed", fmtNum(pl.hourly.ragweed_pollen?.[idx], 0));
+      setText("pollenTimestamp", `Source: Open‑Meteo • ${new Date(times[idx]).toLocaleString()}`);
+    }
+
+    // =========================
+    // Controller
+    // =========================
+
+    /**
+     * Core loader: resolves location, fetches all datasets, and renders UI.
+     * @param {{name?:string, country?:string, lat?:number, lon?:number}} params
+     */
+    async function loadAll(params = {}) {
+      try {
+        // 1) Resolve coordinates (geocode if needed)
+        let name = params.name || DEFAULT_CITY;
+        let country = params.country || DEFAULT_COUNTRY;
+        let lat = params.lat, lon = params.lon, tz;
+
+        if (lat == null || lon == null) {
+          const g = await geocode(name, country);
+          ({ name, country, latitude: lat, longitude: lon, timezone: tz } = g);
+        }
+
+        // Update header city/country immediately
+        setText("cityName", name);
+        setText("countryName", country);
+
+        // 2) Fetch in parallel
+        const [wx, aq, pl] = await Promise.all([
+          getWeather(lat, lon, tz),
+          getAirQuality(lat, lon, tz),
+          getPollen(lat, lon, tz),
+        ]);
+
+        // 3) Render sections
+        renderMain(wx);
+        renderHourly(wx);
+        renderAir(aq);
+        renderPollen(pl);
+      } catch (err) {
+        console.error(err);
+        // Minimal but visible fallback
+        setText("conditionText", "Unable to load weather.");
+        setText("insightText", "Check your internet connection and refresh.");
+      }
+    }
+
+    /**
+     * Attempt to use browser geolocation and reload dashboard for that point.
+     */
+    function useMyLocation() {
+      if (!("geolocation" in navigator)) {
+        alert("Geolocation not supported in this browser.");
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude: lat, longitude: lon } = pos.coords;
+        // Optional: reverse geocode to a name
+        try {
+          const url = new URL(ENDPOINTS.geocode);
+          url.searchParams.set("latitude", lat);
+          url.searchParams.set("longitude", lon);
+          url.searchParams.set("count", "1");
+          const rev = await fetchJSON(url.toString());
+          const r = rev?.results?.[0];
+          const name = r?.name ?? "My Location";
+          const country = r?.country_code ?? "—";
+          await loadAll({ name, country, lat, lon });
+        } catch {
+          await loadAll({ name: "My Location", country: "—", lat, lon });
+        }
+      }, (err) => {
+        console.warn(err);
+        alert("Cannot access location. Please allow permissions and try again.");
+      }, { enableHighAccuracy: true, timeout: 10000 });
+    }
+
+    // =========================
+    // Event Wiring
+    // =========================
+    document.getElementById("useMyLocation").addEventListener("click", useMyLocation);
+
+    // Initial load for São Paulo, BR
+    loadAll();
+  </script>
 </body>
-</html> 
+</html>
